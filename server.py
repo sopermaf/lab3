@@ -41,16 +41,28 @@ def newClient(connection, client_address, threadID):
 	#parse data
 	#broadcast or reply to client
 	
-	inData = connection.recv(256)	
-	connection.sendall(inData)
+	inData = connection.recv(1024)
+	chat1.append(connection)
+	broadCast("hello", chat1, connection)
+	
+	parseMessage(inData)
+	#connection.sendall(inData)
 	
 	connection.close()
 
-def parseMessage(message):
-	print "do something"
+def parseMessage(inMess):
+	message = str(inMess).split('\n')
 	
-	return "
+	chat_choice = message[0].split(' ')[1]
+	username = message[3].split(' ')[1]
 	
+	print "CHAT ROOM: " + chat_choice
+	print "USER: " + username
+
+def broadCast(message, chatRoom, sender):
+	#could be changed to not send Sender back their message??
+	for user in chatRoom:
+		user.send(message)
 	
 #create the threads
 threads = []
@@ -70,9 +82,10 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind(('localhost', PORT))
 sock.listen(1)
 
+# Wait for a connection
+print 'ready for connections'
+
 while True:
-    # Wait for a connection
-    print 'waiting for a connection'
     new_connect, new_addr = sock.accept()
     
     with connectLock:

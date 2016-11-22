@@ -7,11 +7,22 @@ port = 8004  # Correct Port Number Required
 aim_message = "ferdia"
 message = "hello"
 
-s.connect((host, port))
+#user details
+username = "FERDIA"
 
-while True:
-	s.send(message)
-	print s.recv(256)
+#the messages required for joining a chat room
+join_message = "JOIN_CHATROOM: 0"
+ip_message = "CLIENT_IP: 0"
+port_message = "PORT: 0"
+user_name_message = "CLIENT_NAME: " + username
+
+setupMessage = join_message + "\n" + ip_message + "\n" + port_message + "\n" + user_name_message
+
+s.connect((host, port))
+s.send(setupMessage)
+
+print s.recv(1024)
+
 s.close
 
 
