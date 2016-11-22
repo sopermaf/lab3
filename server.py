@@ -20,7 +20,6 @@ class myThread (threading.Thread):
             #lock for concurrency
             with connectLock:
                 while len(connections) < 1: #no connections to reply to
-                    #print str(self.threadID) + " waiting for data"
                     connectLock.wait()
                 #copy the data to local version
                 copy_connect = connections[0]
@@ -41,12 +40,21 @@ def newClient(connection, client_address, threadID):
     print 'closing connection\n'
     connection.close()
 
-#our threadpool setup
-thread1 = myThread(1, "Thread-1", 1)
-thread2 = myThread(2, "Thread-2", 2)
-thread1.start()
-thread2.start()
-
+def parseMessage(message):
+	print "do something"
+	
+	return -1
+	
+#create the threads
+threads = []
+NUM_THREADS = 10
+for i in range(0, NUM_THREADS):
+	thread_name = "Thread-" + str(i)
+	threads.append(myThread(i, thread_name, i))
+	
+#start the threads
+for j in range(0, NUM_THREADS):
+	threads[j].start()
 
 #create TCP socket
 PORT = 8004
