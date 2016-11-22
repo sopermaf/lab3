@@ -8,7 +8,12 @@ aim_message = "ferdia"
 message = "hello"
 
 s.connect((host, port))
-s.send(message)
 
-print s.recv(256)
+while True:
+	s.send(message)
+	print s.recv(256)
 s.close
+
+
+#2 threads, one recieve and one send
+#recieve to listen for broadcasts or response

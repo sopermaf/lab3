@@ -7,6 +7,10 @@ connections = []
 client_addr = []
 connectLock = threading.Condition()
 
+#chatroom arrays of sockets or maybe dictionarys??
+chat1 = []
+chat2 = []
+
 class myThread (threading.Thread):
     def __init__(self, threadID, name, counter):
         threading.Thread.__init__(self)
@@ -30,20 +34,23 @@ class myThread (threading.Thread):
             #lock not needed 
             newClient(copy_connect, copy_addr, self.threadID)
         
-
+#used to deal with a single client through multiple chatrooms
 def newClient(connection, client_address, threadID):
-    print 'connection from: ' + str(client_address) + " -- processing on thread " + str(threadID)
-    inData = connection.recv(256)
-    print 'received: ' + str(inData)
-    connection.sendall(inData)
-    print 'sending back: ' + str(inData)
-    print 'closing connection\n'
-    connection.close()
+	
+	#recieve data
+	#parse data
+	#broadcast or reply to client
+	
+	inData = connection.recv(256)	
+	connection.sendall(inData)
+	
+	connection.close()
 
 def parseMessage(message):
 	print "do something"
 	
-	return -1
+	return "
+	
 	
 #create the threads
 threads = []
@@ -72,6 +79,7 @@ while True:
     	#append new collection to the end
     	connections.append(new_connect)
     	client_addr.append(new_addr)
+		
     	#notify a thread
     	connectLock.notify()
     
