@@ -36,28 +36,32 @@ class myThread (threading.Thread):
         
 #used to deal with a single client through multiple chatrooms
 def newClient(connection, client_address, threadID):
-	
-	#recieve data
-	#parse data
-	#broadcast or reply to client
-	
+	#setup connection
 	inData = connection.recv(1024)
-	chat1.append(connection)
-	broadCast("hello", chat1, connection)
+	username = parseJoinMessage(inData, connection)
+	connection.sendall(inData)
 	
-	parseMessage(inData)
-	#connection.sendall(inData)
+	#deal with the client while connected
 	
+	#terminate the connection
 	connection.close()
 
-def parseMessage(inMess):
+def parseJoinMessage(inMess, connection):
 	message = str(inMess).split('\n')
 	
 	chat_choice = message[0].split(' ')[1]
 	username = message[3].split(' ')[1]
 	
+	if chat_choice == '0':
+		chat1.append(connection)
+	elif chat_choice == '1':
+		chat2.append(connection)
+	else:
+		print "PARSE ERROR FOR CHATROOM CHOICE"
+	
 	print "CHAT ROOM: " + chat_choice
 	print "USER: " + username
+	return username
 
 def broadCast(message, chatRoom, sender):
 	#could be changed to not send Sender back their message??
