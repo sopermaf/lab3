@@ -7,6 +7,10 @@ connections = []
 client_addr = []
 connectLock = threading.Condition()
 
+#chatroom arrays of sockets or maybe dictionarys??
+chat1 = []
+chat2 = []
+
 class myThread (threading.Thread):
     def __init__(self, threadID, name, counter):
         threading.Thread.__init__(self)
@@ -30,20 +34,35 @@ class myThread (threading.Thread):
             #lock not needed 
             newClient(copy_connect, copy_addr, self.threadID)
         
-
+#used to deal with a single client through multiple chatrooms
 def newClient(connection, client_address, threadID):
-    print 'connection from: ' + str(client_address) + " -- processing on thread " + str(threadID)
-    inData = connection.recv(256)
-    print 'received: ' + str(inData)
-    connection.sendall(inData)
-    print 'sending back: ' + str(inData)
-    print 'closing connection\n'
-    connection.close()
-
-def parseMessage(message):
-	print "do something"
 	
-	return -1
+	#recieve data
+	#parse data
+	#broadcast or reply to client
+	
+	inData = connection.recv(1024)
+	chat1.append(connection)
+	broadCast("hello", chat1, connection)
+	
+	parseMessage(inData)
+	#connection.sendall(inData)
+	
+	connection.close()
+
+def parseMessage(inMess):
+	message = str(inMess).split('\n')
+	
+	chat_choice = message[0].split(' ')[1]
+	username = message[3].split(' ')[1]
+	
+	print "CHAT ROOM: " + chat_choice
+	print "USER: " + username
+
+def broadCast(message, chatRoom, sender):
+	#could be changed to not send Sender back their message??
+	for user in chatRoom:
+		user.send(message)
 	
 #create the threads
 threads = []
@@ -63,15 +82,17 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind(('localhost', PORT))
 sock.listen(1)
 
+# Wait for a connection
+print 'ready for connections'
+
 while True:
-    # Wait for a connection
-    print 'waiting for a connection'
     new_connect, new_addr = sock.accept()
     
     with connectLock:
     	#append new collection to the end
     	connections.append(new_connect)
     	client_addr.append(new_addr)
+		
     	#notify a thread
     	connectLock.notify()
     
