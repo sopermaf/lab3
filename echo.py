@@ -1,30 +1,37 @@
 import socket
+import thread
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)        # Create a TCP socket
-host = "localhost"	    # On local host this time
-port = 8004  # Correct Port Number Required
-
-aim_message = "ferdia"
-message = "hello"
-
+def listenSock(connection):
+    while True: #change to bool which can be changed later
+        print "\n\nReceived:"
+        print connection.recv(1024)
+        print "\nEnter Chat: "
+        
 #user details
 username = "FERDIA"
 
-#the messages required for joining a chat room
+#setup socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)        # Create a TCP socket
+host = "localhost"	                                         # On local host this time
+port = 8004                                                  # Correct Port Number Required
+s.connect((host, port))
+
+#start listening thread
+thread.start_new_thread(listenSock, (s, ))
+
+#setup message
 join_message = "JOIN_CHATROOM: 0"
 ip_message = "CLIENT_IP: 0"
 port_message = "PORT: 0"
 user_name_message = "CLIENT_NAME: " + username
-
 setupMessage = join_message + "\n" + ip_message + "\n" + port_message + "\n" + user_name_message
 
-s.connect((host, port))
 s.send(setupMessage)
 
-print s.recv(1024)
+#main
+while True:
+    message = raw_input("Enter Chat: ")
+    s.send(message)
+
 
 s.close
-
-
-#2 threads, one recieve and one send
-#recieve to listen for broadcasts or response
