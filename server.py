@@ -45,7 +45,7 @@ class myThread (threading.Thread):
         
 def newClient(connection):
     terminate = False    
-    
+
     while terminate == False:
         inData = connection.recv(1024)
         print inData
@@ -55,18 +55,25 @@ def newClient(connection):
             joinChat(inData, connection)
             print "USER JOINED"
         elif "LEAVE_CHATROOM:" in inData:
-            #call the leave function
-            print "LEAVE"
+            leaveChat(inData, connection)
+            print "USER LEAVING CHATROOM"
         elif "CHAT:" in inData:
             #call the broadcast function
             print "CHAT MESSAGE"
         elif "DISCONNECT:" in inData:
             terminate = True
-            print "USER DISCONNECTED"
         else:
             sendError(404, "NO PUEDO ENCONTRAR EL CODIGO", connection)
     
+    #Terminate the connection and delete all data
     connection.close()
+    
+    if connection in chat1:
+        chat1.remove(connection)
+        
+    if connection in chat2:    
+        chat2.remove(connection)
+    print "USER DISCONNECTED"
     #check if still in chatrooms and remove?
     
 def joinChat(inMess, connection):
@@ -117,7 +124,35 @@ def broadCast(message, chatID, senderSock):
         user.send(message)
 
 def leaveChat(inMess, connection):    
-    print "leave chat func call"
+    #get the username and chatRoom
+    message = str(inMess).split('\n')
+    CHAT_LEAVING = message[0].split(' ')[1]
+    JOIN_ID = message[1].split(' ')[1]
+    CLIENT_NAME = message[2].split(' ')[1]
+    left = False
+    
+    #change to accomadate any size int
+    if CHAT_LEAVING == '0' and connection in chat1:
+        chat1.remove(connection)
+        left = True
+    elif CHAT_LEAVING == '1' and connection in chat2:
+        chat2.remove(connection)
+        left = True
+    
+    #reply success and broadcast join message, OR error
+    if left == False:
+        sendError(1738, "LEAVE UNSUCCESSFUL - UNKNOWN ROOM NUMBER OR NOT PRESENT", connection)
+    else:
+        #contact client
+        room_leave = "LEFT_CHATROOM: " + str(CHAT_LEAVING) + "\n"
+        join_id = "JOIN_ID: " + str(JOIN_ID)
+        client_message = room_leave + join_id
+        
+        connection.send(client_message)
+        
+        #contact chatroom
+        chat_alert = "USER: " + CLIENT_NAME + " has joined the room"
+        broadCast(chat_alert, CHAT_LEAVING, connection)
     
 def sendError(error_code, error_description, connection):
     #compose the error message
