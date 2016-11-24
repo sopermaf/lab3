@@ -34,16 +34,8 @@ class myThread (threading.Thread):
             #lock not needed 
             newClient(copy_connect, copy_addr, self.threadID)
         
-
 #used to deal with a single client through multiple chatrooms
 def newClient(connection, client_address, threadID):
-    print 'connection from: ' + str(client_address) + " -- processing on thread " + str(threadID)
-    inData = connection.recv(256)
-    print 'received: ' + str(inData)
-    connection.sendall(inData)
-    print 'sending back: ' + str(inData)
-    print 'closing connection\n'
-    connection.close()
 	#setup connection
 	inData = connection.recv(1024)
 	username = parseJoinMessage(inData, connection)
@@ -54,16 +46,9 @@ def newClient(connection, client_address, threadID):
 	#terminate the connection
 	connection.close()
 
-
-
-
-
-def parseMessage(message):
-	print "do something"
 def parseJoinMessage(inMess, connection):
 	message = str(inMess).split('\n')
 	
-	return -1
 	chat_choice = message[0].split(' ')[1]
 	username = message[3].split(' ')[1]
 	
@@ -105,8 +90,6 @@ sock.listen(1)
 print 'ready for connections'
 
 while True:
-    # Wait for a connection
-    print 'waiting for a connection'
     new_connect, new_addr = sock.accept()
     
     with connectLock:
