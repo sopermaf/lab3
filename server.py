@@ -48,7 +48,7 @@ def newClient(connection):
 
     while terminate == False:
         inData = connection.recv(1024)
-        print inData
+        print "Received: \n" +  inData
         
         #***could go wrong if someone sent this in their message! workable but not safe!!***
         if "JOIN_CHATROOM:" in inData:
@@ -58,7 +58,7 @@ def newClient(connection):
             leaveChat(inData, connection)
             print "USER LEAVING CHATROOM"
         elif "CHAT:" in inData:
-            #call the broadcast function
+            chatMessage(inData, connection)
             print "CHAT MESSAGE"
         elif "DISCONNECT:" in inData:
             terminate = True
@@ -113,13 +113,14 @@ def joinChat(inMess, connection):
     
 def broadCast(message, chatID, senderSock):
     #could be changed to not send Sender back their message??
-    if chatID == "0":
+    if chatID == "0" and senderSock in chat1:
         chatRoom = chat1
-    elif chatID == "1":
+    elif chatID == "1" and senderSock in chat2:
         chatRoom = chat2
     else:
-        print "BROADCAST chatroom select error"
-    
+        sendError(432, "CHATROOM NOT DEFINED OR NOT JOINED", senderSock)
+        return
+        
     for user in chatRoom:
         user.send(message)
 
@@ -153,7 +154,22 @@ def leaveChat(inMess, connection):
         #contact chatroom
         chat_alert = "USER: " + CLIENT_NAME + " has joined the room"
         broadCast(chat_alert, CHAT_LEAVING, connection)
+
+def chatMessage(inMess, connection):
+    #parse the data
+    data = str(inMess).split('\n', 3)
+    CHAT_CHOICE = data[0].split(' ')[1]
     
+    #format the data for sending
+    data.pop(1) #DELETE UNNEDDED DATA FOR CLIENTS
+    message = data[0] + "\n"
+    message += data[1] + "\n"
+    message += data[2]
+    print message
+    
+    #take action
+    broadCast(message, CHAT_CHOICE, connection)
+ 
 def sendError(error_code, error_description, connection):
     #compose the error message
     code = "ERROR_CODE: " + str(error_code) + "\n"
