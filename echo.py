@@ -5,9 +5,8 @@ closed = False
 
 def listenSock(connection):
     while closed == False: #change to bool which can be changed later
-        print "\n\nReceived:"
-        print connection.recv(1024)
-        print "\nEnter Chat: "
+        received = connection.recv(1024)
+        print "\n\n***\nReceived:\n" + received + "\n***\n\nCOMMAND (CHAT, JOIN, LEAVE, DISCONNECT): "
 
 #setup message
 def joinMessage(chatRoom, username):
@@ -61,6 +60,8 @@ while closed == False:
         chatRoom = raw_input("Send to chatroom(0, 1): ")
         msg = raw_input("Enter msg: ")
         message = chatMessage(chatRoom, "110", username, msg)
+    elif message == "DISCONNECT":
+        message += ":"
     
     s.send(message)
     
@@ -68,6 +69,6 @@ while closed == False:
         closed = True
         break
 
-raw_input("Ready to quit?: ")
+raw_input("Session Ended, press enter")
     
 s.close

@@ -8,7 +8,7 @@ client_addr = []
 connectLock = threading.Condition()
 uniqueNum_Lock = threading.Lock()
 
-#chatroom arrays of sockets or maybe dictionarys??
+#chatroom variable
 chat1 = []
 chat2 = []
 
@@ -28,7 +28,7 @@ class myThread (threading.Thread):
         self.counter = counter
         
     def run(self):
-        print "Starting " + self.name        
+        #print "Starting " + self.name        
         while True:
             #lock for concurrency
             with connectLock:
@@ -48,7 +48,7 @@ def newClient(connection):
 
     while terminate == False:
         inData = connection.recv(1024)
-        print "Received: \n" +  inData
+        #print "Received: \n" +  inData
         
         #***could go wrong if someone sent this in their message! workable but not safe!!***
         if "JOIN_CHATROOM:" in inData:
@@ -63,7 +63,7 @@ def newClient(connection):
         elif "DISCONNECT:" in inData:
             terminate = True
         else:
-            sendError(404, "NO PUEDO ENCONTRAR EL CODIGO", connection)
+            sendError(404, "ACTION CODE NOT FOUND", connection)
     
     #Terminate the connection and delete all data
     connection.close()
@@ -108,17 +108,17 @@ def joinChat(inMess, connection):
         connection.send(client_message)
         
         #contact chatroom
-        chat_alert = "USER: " + CLIENT_NAME + " has joined the room"
-        broadCast(chat_alert, CHAT_CHOICE, connection)
+        chat_alert = "USER: " + CLIENT_NAME + " has joined room " + str(CHAT_CHOICE)
+        broadCast(chat_alert, CHAT_CHOICE)
     
-def broadCast(message, chatID, senderSock):
+def broadCast(message, chatID):
     #could be changed to not send Sender back their message??
-    if chatID == "0" and senderSock in chat1:
+    if chatID == "0":
         chatRoom = chat1
-    elif chatID == "1" and senderSock in chat2:
+    elif chatID == "1":
         chatRoom = chat2
     else:
-        sendError(432, "CHATROOM NOT DEFINED OR NOT JOINED", senderSock)
+        sendError(432, "CHATROOM NOT DEFINED", senderSock)
         return
         
     for user in chatRoom:
@@ -133,16 +133,22 @@ def leaveChat(inMess, connection):
     left = False
     
     #change to accomadate any size int
-    if CHAT_LEAVING == '0' and connection in chat1:
-        chat1.remove(connection)
-        left = True
-    elif CHAT_LEAVING == '1' and connection in chat2:
-        chat2.remove(connection)
-        left = True
+    if CHAT_LEAVING == '0':
+        try:
+            chat1.remove(connection)
+            left = True
+        except:
+            sendError(1739, "LEAVE UNSUCCESSFUL - USER NOT PRESENT IN ROOM", connection)
+    elif CHAT_LEAVING == '1':
+        try:
+            chat2.remove(connection)
+            left = True
+        except:
+            sendError(1739, "LEAVE UNSUCCESSFUL - USER NOT PRESENT IN ROOM", connection)
     
     #reply success and broadcast join message, OR error
     if left == False:
-        sendError(1738, "LEAVE UNSUCCESSFUL - UNKNOWN ROOM NUMBER OR NOT PRESENT", connection)
+        sendError(1738, "LEAVE UNSUCCESSFUL - UNKNOWN ROOM", connection)
     else:
         #contact client
         room_leave = "LEFT_CHATROOM: " + str(CHAT_LEAVING) + "\n"
@@ -152,8 +158,8 @@ def leaveChat(inMess, connection):
         connection.send(client_message)
         
         #contact chatroom
-        chat_alert = "USER: " + CLIENT_NAME + " has joined the room"
-        broadCast(chat_alert, CHAT_LEAVING, connection)
+        chat_alert = "USER: " + CLIENT_NAME + " has left room " + str(CHAT_LEAVING)
+        broadCast(chat_alert, CHAT_LEAVING)
 
 def chatMessage(inMess, connection):
     #parse the data
@@ -165,10 +171,15 @@ def chatMessage(inMess, connection):
     message = data[0] + "\n"
     message += data[1] + "\n"
     message += data[2]
-    print message
+    #print message
     
     #take action
-    broadCast(message, CHAT_CHOICE, connection)
+    if CHAT_CHOICE == "0" and not connection in chat1:
+        sendError(435, "CHAT NOT SENT - CHATROOM NOT " + CHAT_CHOICE + "JOINED", senderSock)
+    elif CHAT_CHOICE == "1" and not connection in chat2:
+        sendError(435, "CHAT NOT SENT - CHATROOM NOT " + CHAT_CHOICE + "JOINED", senderSock)
+    else:
+        broadCast(message, CHAT_CHOICE)
  
 def sendError(error_code, error_description, connection):
     #compose the error message
@@ -191,7 +202,7 @@ for j in range(0, NUM_THREADS):
     threads[j].start()
 
 # Wait for a connection
-print 'ready for connections'
+print 'server ready for connections...'
 
 while True:
     new_connect, new_addr = sock.accept()
